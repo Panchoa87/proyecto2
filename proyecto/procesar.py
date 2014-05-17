@@ -867,7 +867,8 @@ def calculosFinales(c,perfil,nodes,enlaces,db):
 		c.execute(sql)
 		c.execute("INSERT INTO tamano_entrenamiento_SENTIDO_FONDECYT(id_evaluacion_historica,nodos_positivos,nodos_negativos,nodos_neutros,enlaces_positivos,enlaces_negativos,enlaces_neutros) VALUES ("+str(id_evaluacion_historica)+","+str(len(nodes[1]))+","+str(len(nodes[2]))+","+str(len(nodes[0]))+","+str(len(enlaces[1]))+","+str(len(enlaces[2]))+","+str(len(enlaces[0]))+")")
 		
-		sql="insert into log_clasificacion(select *,%s,%s from evaluador_netsense_sentido_fondecyt)" %(str(perfil),str(id_evaluacion_historica))
+		sql="insert into log_clasificacion(select null,id_perfil_articulo,cuerpo,sentido_manual,netsense,netsense_w,fecha,%s,%s from evaluador_netsense_sentido_fondecyt)" %(str(perfil),str(id_evaluacion_historica))
+		print(sql)
 		c.execute(sql)
 		
 		'''print "Neutros", TP[0],FN[0],FP[0],TN[0]

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     archivo=str(sys.argv[1])
     opcion=str(sys.argv[2])
     reader = csv.reader(open(archivo, 'rb'), delimiter=',')
-    archivo = csv.writer(open("normalizadoWeka.csv", "wb"), delimiter=',')
+    archivo = csv.writer(open("normalizado"+archivo, "wb"), delimiter=',')
     #palabras = csv.writer(open("analisis/palabras.csv", "wb"), delimiter='\t')
     stopword = p.stopWords()
     db1 = MySQLdb.connect("127.0.0.1","root","","analitic",charset ="utf8",init_command="set names utf8",use_unicode=True)
@@ -32,19 +32,19 @@ if __name__ == '__main__':
     
     for index,row in enumerate(reader):
         print index
-        if(row[4]=='2'):
-            row[4]="Negativo"
-        elif(row[4]=='1'):
-            row[4]="Positivo"
+        if(row[1]=='2'):
+            row[1]="Negativo"
+        elif(row[1]=='1'):
+            row[1]="Positivo"
         else:
-            row[4]="Neutro"
+            row[1]="Neutro"
         
         emoticon = [0,0,0]
         tweetwords=[]
-        tweet=str(row[2].replace('\n',' '))
+        tweet=str(row[0].replace('\n',' '))
         tweet=str(tweet.replace('"',''))
         leaves="s"
-        tweet=tweet.decode('utf-8')
+        #tweet=tweet.decode('utf-8')
         tweet = p.reempEmoticon(tweet) 
         tweet = tweet.replace("RT"," ")
         tweet = tweet.lower()
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                 tweetwords[i] = p.cambiarPalabraS(tweetwords[i],c1,sopena)
                 #tweetwords[i] = p.cambiarPalabraS(tweetwords[i],c1)
         #row[0]='"'+str(row[0].replace('"',''))+'"'
-        row[2]='"'+" ".join([x.encode('utf-8') for x in tweetwords])+'"'
+        row[0]='"'+" ".join([x.encode('utf-8') for x in tweetwords])+'"'
 
 
         
