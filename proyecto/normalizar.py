@@ -44,7 +44,7 @@ if __name__ == '__main__':
         tweet=str(row[0].replace('\n',' '))
         tweet=str(tweet.replace('"',''))
         leaves="s"
-        #tweet=tweet.decode('utf-8')
+        tweet=tweet.decode('utf-8')
         tweet = p.reempEmoticon(tweet) 
         tweet = tweet.replace("RT"," ")
         tweet = tweet.lower()
