@@ -27,17 +27,13 @@ import time
 
 
 # CAMBIA PALABRA #
+#Busca la palabra en el diccionario del steammer para remplazarla por su lema
 def cambiarPalabraS(palabra,c,sopena):
     word_destino=sopena.get(palabra)
     if word_destino is  None:
         return palabra
     else:
-        word_destino=word_destino.replace("á".decode("utf-8"),"a")
-        word_destino=word_destino.replace("é".decode("utf-8"),"e")
-        word_destino=word_destino.replace("í".decode("utf-8"),"i")
-        word_destino=word_destino.replace("ó".decode("utf-8"),"o")
-        word_destino=word_destino.replace("ú|ü".decode("utf-8"),"u")
-        return word_destino
+        return quitarAcentos(word_destino)
 #stopwords
 def stopWords():
     stopword = ["de","la","que","el","en","y","a","los","se","del","las","un","por","con","una","su","para","es","al","lo","como","mÃƒÂ­as","o","pero","sus","le","ha","me","sin","sobre","este","ya","entre","cuando","todo","esta","ser","son","dos","tambiÃƒÂ©n","fue","era","muy","hasta","desde"]
@@ -60,6 +56,14 @@ def tokenizar(cuerpo,leaves):
     palabras = normalizar(palabras)
     palabras = sufijos(palabras,leaves)
     return palabras
+
+def quitarAcentos(cuerpo):
+    cuerpo=cuerpo.replace("á".decode("utf-8"),"a")
+    cuerpo=cuerpo.replace("é".decode("utf-8"),"e")
+    cuerpo=cuerpo.replace("í".decode("utf-8"),"i")
+    cuerpo=cuerpo.replace("ó".decode("utf-8"),"o")
+    cuerpo=cuerpo.replace("ú|ü".decode("utf-8"),"u")
+    return cuerpo
 
 # BLOQUE PESOS ENLACES #
 def bloquePesos(palabras,c,id_perfil,tabenlaces,id_articulo,tipoEnlace,fecha_pub,sopena):
@@ -87,6 +91,7 @@ def bloquePesos(palabras,c,id_perfil,tabenlaces,id_articulo,tipoEnlace,fecha_pub
     return pares
     
 # REEMPLAZA EMOTICONOS #
+# Se reemplazan los emoticones por la etiqueta semantica
 def reempEmoticon(cuerpo):
     emoticonpositivo =" emoticonpositivo "
     emoticonnegativo =" emoticonegativo "
@@ -94,27 +99,23 @@ def reempEmoticon(cuerpo):
     emoticonP = [":)","XD","(:",":D",":-)","(-:","=D","=)","(=",";-)",";)",";D","<3",":3"]
     emoticonN = [":(","):",":-(",")-:","D:","D=","=(",")=",":'(","='[",":_(","/T_T","TOT",";_;"]
     
-    for i in range(len(emoticonP)):
-        cuerpo=cuerpo.replace(emoticonP[i],emoticonpositivo)
-    for i in range(len(emoticonN)):
-        cuerpo=cuerpo.replace(emoticonN[i],emoticonnegativo)
+    for i in (emoticonP):
+        cuerpo=cuerpo.replace(i,emoticonpositivo)
+    for i in (emoticonN):
+        cuerpo=cuerpo.replace(i,emoticonnegativo)
     return cuerpo
     
 # REEMPLAZA LETRAS REPETIDAS #
+# Se considera que no hayan mas de 2 letras repetidas, tambien se quitar las repetidas en cooperacion pero solo si aparecen 3 'o'
 def repChar(cuerpo):
-
     cuerpo=re.sub("(http|www|htpt)\S","<URL>",cuerpo)
-    cuerpo=re.sub("á","a",cuerpo)
-    cuerpo=re.sub("é","e",cuerpo)
-    cuerpo=re.sub("(í|ï)+","i",cuerpo)
-    cuerpo=re.sub("ó","o",cuerpo)
-    cuerpo=re.sub("(ú|ú)+","u",cuerpo)
+    cuerpo=quitarAcentos(cuerpo)
     expReg = ["a","b","c","d","f","g","h","i","j","k","m","n","p","q","s","u","v","w","x","y","z"]
-    for i in range(len(expReg)):
-        cuerpo=re.sub(expReg[i]+'{2,}', expReg[i], cuerpo)
+    for i in expReg:
+        cuerpo=re.sub(i+'{2,}', i, cuerpo)
     expReg2 =['e','o','l','r'] 
-    for i in range(len(expReg2)):
-        cuerpo=re.sub(expReg2[i]+'{2,}', expReg2[i], cuerpo)
+    for i in expReg2:
+        cuerpo=re.sub(i+'{3,}', i, cuerpo)
     return cuerpo
 
 # ELIMINA CARACTERES RAROS #
@@ -136,6 +137,8 @@ def strChar(cuerpo):
     return cuerpo
 
 # NORMALIZA SEGUN HASHTAGS, URLS, ETC #
+# hay que cambiar la mencion por una expresion regular ya que cualqueircosa@mencion la esta tomando como mencion
+# en el caso de la url se cambia antes ya que al sacar los signos separa la url
 def normalizar(palabras):
 
     for i in range (len(palabras)):
@@ -143,7 +146,7 @@ def normalizar(palabras):
             palabras[i]="<MENCION>"
         if "#" in palabras[i]:
             palabras[i]="<HASHTAG>"
-        if "www" in palabras[i] or "http" in palabras[i] or "htpt" in palabras[i] or "URL" in palabras[i]:
+        if "URL" in palabras[i]:
             palabras[i]="<URL>"
         if "$" in palabras[i]:
             palabras[i]="<MONEDA>"
@@ -174,19 +177,19 @@ def genRedes(c,leaves,tabenlaces,db,fecha_a,fecha_p,perfiles,sopena):
     resultado=c.fetchall()
     for fila in resultado:
         id_perfil=fila[0]
-        print "Trabajando con perfil " +str(id_perfil)
-        logging.info( "Trabajando con perfil " +str(id_perfil))
+        mensaje= "Trabajando con perfil " +str(id_perfil)
+        logging.info(mensaje)
         
         for i in range(3):
-            print "##### GENERO LA REDES "+str(i)+ "#######"
-            logging.info("##### Genero los enlaces de las redes"+str(i)+ "#######")
+            mensaje= "##### GENERO LA REDES %s #######" %(str(i))
+            print mensaje
+            logging.info(mensaje)
             
-            #consulta qu eno pesca en windows  sql="SELECT a.cuerpo, pats.id_perfil_articulo, a.fecha_publicacion from perfiles_articulos pa JOIN articulos a ON pa.id_articulo = a.id_articulo JOIN perfiles_articulos_tipos_sentidos pats ON pats.id_perfil_articulo = pa.id_perfil_articulo WHERE a.id_plataforma = 0 AND pats.clasificado = 1 AND id_perfil="+str(id_perfil)+" AND pats.tipo_sentido = "+str(i)+" AND date(a.fecha_publicacion) <= '"+str(fecha_post)+"' AND date(a.fecha_publicacion) >= '"+str(fecha_ant)+"' order by a.fecha_publicacion desc Limit 1000"
+            #consulta que no pesca en windows  sql="SELECT a.cuerpo, pats.id_perfil_articulo, a.fecha_publicacion from perfiles_articulos pa JOIN articulos a ON pa.id_articulo = a.id_articulo JOIN perfiles_articulos_tipos_sentidos pats ON pats.id_perfil_articulo = pa.id_perfil_articulo WHERE a.id_plataforma = 0 AND pats.clasificado = 1 AND id_perfil="+str(id_perfil)+" AND pats.tipo_sentido = "+str(i)+" AND date(a.fecha_publicacion) <= '"+str(fecha_post)+"' AND date(a.fecha_publicacion) >= '"+str(fecha_ant)+"' order by a.fecha_publicacion desc Limit 1000"
             sql="SELECT cuerpo, id_perfil_articulo, fecha_publicacion from tweets WHERE id_perfil="+str(id_perfil)+" AND tipo_sentido = "+str(i)+" AND date(fecha_publicacion) <= '"+str(fecha_post)+"' AND date(fecha_publicacion) >= '"+str(fecha_ant)+"' order by fecha_publicacion desc Limit 1000"
             #print sql
             logging.info(sql)
             c.execute(sql)
-            #print "SELECT a.cuerpo, pats.id_perfil_articulo, a.fecha_publicacion from perfiles_articulos pa JOIN articulos a ON pa.id_articulo = a.id_articulo JOIN perfiles_articulos_tipos_sentidos pats ON pats.id_perfil_articulo = pa.id_perfil_articulo WHERE a.id_plataforma = 0 AND pats.clasificado = 1 AND id_perfil="+str(id_perfil)+" AND pats.tipo_sentido = "+str(i)+" AND date(a.fecha_publicacion) <= '"+str(fecha_post)+"' AND date(a.fecha_publicacion) >= '"+str(fecha_ant)+"' order by a.fecha_publicacion desc Limit 1000"
             
             resultado = c.fetchone()
             
@@ -221,7 +224,7 @@ def genRedes(c,leaves,tabenlaces,db,fecha_a,fecha_p,perfiles,sopena):
                     db.commit()                    
             
             for j in range(len(cuerpo)):
-                print "Tweet " + str(j) +" de "+str(len(cuerpo))
+                print "Tweet %s de %s" %(str(j),str(len(cuerpo)))
                 cuerpo[j] = procesarCuerpo(cuerpo[j])
                 palabras = tokenizar(cuerpo[j],leaves)
                 bloquePesos(palabras,c,id_perfil,tabenlaces,id_articulo[j],i,fecha_pub[j],sopena)
@@ -285,30 +288,25 @@ def revisarAnew(tweetwords,c):
                 #print tweetwords[j]
     if evaluacion[1]==1 or contval == 1:
         valence=0
-        #print "sin valence"
     else:
         valence=float(val/(contval-1))
-        #print "valence "+str(valence)+ " por " +str(contval-1)+ " palabras"
-        #if valence == 0:
-        #       print "este tweet no cae dentro de anew"
     return valence,contval
-    
+
+#cuenta el numero de emtocicones ademas de quitar las stopwords dependiendo de stpw    
 def procesarTweet(tweet,emoticon,stpw,tweetwords):
     stopword = stopWords()
     for i in range (len(tweet)):
-        #print tweet[i]
         if tweet[i]=="emoticonpositivo":
             emoticon[1] += 1
-            #print ":)" 
         if tweet[i]=="emoticonegativo":
             emoticon[2] += 1
-            #print ":("
         if stpw=="0":
             if tweet[i] not in stopword and len(tweet[i]) > 1:
                 tweetwords.append(tweet[i])                    
         if stpw=="1":
             tweetwords.append(tweet[i])
     return [emoticon,tweetwords]
+
     
 # EVALUA REDES #  
 def evaluarRed(tweetwords,nodes,analisis,i,g,ponderadis,ponderapares,emoticon,valence,contval,sopena):
@@ -322,7 +320,6 @@ def evaluarRed(tweetwords,nodes,analisis,i,g,ponderadis,ponderapares,emoticon,va
     c1 = db1.cursor()
     stopword = stopWords()
     for k in range (len(tweetwords)-1):
-        #print "Palabras " + str(tweetwords[k])+" y "+str(tweetwords[k+1]) +" en +"
         if tweetwords[k] not in stopword:
             tweetwords[k] = cambiarPalabraS(tweetwords[k],c1,sopena)
         if tweetwords[k+1] not in stopword:
@@ -349,10 +346,8 @@ def evaluarRed(tweetwords,nodes,analisis,i,g,ponderadis,ponderapares,emoticon,va
     print "______RESULTADO ________"
     
     print "La suma de distancias es "+ str(distancia)
-    print "Hubo: "+ str(pares) + " pares"
-    #print "En promedio la distancia es "+ str(distancia/pares) 
+    print "Hubo: %s pares" %str(pares) 
     pares=float(pares)
-    print "pares: "+str(pares)
     dis=float(distancia)
     if pares == 0:
         promdis = 0
@@ -497,7 +492,6 @@ def procesaNetsense(db, perfil,tpo,ev,fecha_a,fecha_p,fecha_e,sopena,leaves ="s"
     for i in range(3):
         
         g[i] = genRedNetsense(i,g[i],balance,stpw,perfil,umbralpeso,c,fecha_a,fecha_p)  
-        #save(g[i],"json/Red"+str(i)+"-"+str(datetime.today())+".json")  
         enlaces[i] = g[i].edges()
         nodes[i] = g[i].nodes()
         nodos.append(len(nodes[i]))
@@ -529,8 +523,6 @@ def procesaNetsense(db, perfil,tpo,ev,fecha_a,fecha_p,fecha_e,sopena,leaves ="s"
             tweet=regtweet[0]
             id=str(regtweet[1])
 
-            
-            #hay qye cambiarloprint str(contweet)+") " + tweet + "-> id:" +str(id)
             
             tweet = reempEmoticon(tweet) 
             tweet = tweet.replace("RT"," ")
@@ -719,21 +711,11 @@ def calculosFinales(c,perfil,nodes,enlaces,db):
             else:
                 #print "Recall: No definido (/0)"
                 rec[i]=0
-            #try:
-            #    print "F-1: "+str( 2*pren*recn/(pren+recn) )
-            #    f.write("F-1: "+str( 2*pren*recn/(pren+recn) ))
-            #except:
-            #    pass
             print "_*_*_*_*_*_*_*_*_*_*"
-            #f.write("\n_*_*_*_*_*_*_*_*_*_*\n")
+
         print "_*_*_*_*_*_*"
         print "microaverage"
         print "_*_*_*_*_*_*"
-        
-        #print str(TP_u)+" kkakaka"
-        #print str(FP_u)+" kkakaka"
-        #print str(FN_u)+" kkakaka"
-        
     
         print "Precision: " + str(float(TP_u/(TP_u+FP_u)))
         microPRE=float(TP_u/(TP_u+FP_u))
